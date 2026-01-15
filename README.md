@@ -1,1 +1,0 @@
-# daftarnilaiTKA2026

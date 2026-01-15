@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Hasil Try Out TKA - SMPN 12 Surabaya</title>
+    
+    <!-- Script Pendukung (React & Tailwind dari CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            margin: 0;
+        }
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // --- KONFIGURASI API ---
+        // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
+        const API_URL = "https://script.google.com/macros/s/AKfycbx4bSaKYMkJSa42TZwYhraXgCAXkhiLEgpyjpniTwkHgMmRa0-zoNKkW2F9BdkfZ4Yl/exec";
+
+        const App = () => {
+            const [nisnInput, setNisnInput] = useState('');
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [studentData, setStudentData] = useState(null);
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                if (!nisnInput.trim()) return;
+                
+                setLoading(true);
+                setError('');
+
+                try {
+                    const response = await fetch(`${API_URL}?nisn=${nisnInput.trim()}`);
+                    const data = await response.json();
+
+                    // Validasi: data harus ada dan memiliki properti nisn (bukan error)
+                    if (data && !data.error && data.nisn) {
+                        setStudentData(data);
+                        setIsLoggedIn(true);
+                    } else {
+                        setError('Nomor NISN/Peserta tidak ditemukan. Periksa kembali input Anda.');
+                    }
+                } catch (err) {
+                    setError('Terjadi kesalahan koneksi. Pastikan API URL benar dan sudah di-deploy.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleLogout = () => {
+                setIsLoggedIn(false);
+                setNisnInput('');
+                setStudentData(null);
+            };
+
+            // Tampilan Halaman Login
+            if (!isLoggedIn) {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+                        <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-blue-100 overflow-hidden border border-slate-100">
+                            <div className="bg-gradient-to-br from-blue-800 to-blue-600 p-10 text-center text-white">
+                                <div className="flex justify-center mb-6">
+                                    <div className="bg-white/10 p-4 rounded-3xl backdrop-blur-xl border border-white/20">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                                    </div>
+                                </div>
+                                <h1 className="text-2xl font-black uppercase tracking-tight leading-none">SMPN 12 Surabaya</h1>
+                                <p className="text-blue-100 text-sm mt-3 font-medium tracking-wide">Portal Hasil Try Out TKA</p>
+                            </div>
+                            
+                            <div className="p-10">
+                                <form onSubmit={handleLogin} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nomor NISN / Peserta</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            disabled={loading}
+                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold text-slate-700 placeholder:font-normal"
+                                            placeholder="Masukkan nomor Anda"
+                                            value={nisnInput}
+                                            onChange={(e) => setNisnInput(e.target.value)}
+                                        />
+                                    </div>
+                                    
+                                    {error && (
+                                        <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs border border-red-100 font-bold animate-shake text-center">
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-3 uppercase tracking-wider text-sm"
+                                    >
+                                        {loading ? "Mencari Data..." : "Lihat Hasil Nilai"}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Tampilan Dashboard Nilai Siswa
+            return (
+                <div className="min-h-screen">
+                    {/* Header Navigasi */}
+                    <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
+                        <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
+                            <div className="flex items-center gap-3 text-blue-700 font-black">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                <div className="leading-tight">
+                                    <h2 className="text-slate-800 text-lg">SMPN 12</h2>
+                                    <p className="text-[10px] text-blue-500 uppercase tracking-widest">Surabaya</p>
+                                </div>
+                            </div>
+                            <button onClick={handleLogout} className="text-[10px] font-black text-slate-400 hover:text-red-600 flex items-center gap-2 transition-colors uppercase tracking-widest px-4 py-2 rounded-xl border border-slate-100 hover:bg-red-50">
+                                Logout
+                            </button>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-5xl mx-auto px-6 py-10">
+                        {/* Identitas Siswa */}
+                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 p-8 md:p-12 mb-10 flex flex-col md:flex-row items-center gap-10 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -mr-32 -mt-32 opacity-30"></div>
+                            <div className="bg-blue-700 w-32 h-32 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shrink-0 rotate-3 z-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div className="text-center md:text-left z-10 flex-1">
+                                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 inline-block">Hasil Try Out TKA</span>
+                                <h2 className="text-4xl font-black text-slate-800 tracking-tight mb-4 uppercase leading-tight">{studentData.nama}</h2>
+                                <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                                    <span className="bg-slate-100 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200">NISN: {studentData.nisn}</span>
+                                    <span className="bg-slate-100 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200 uppercase">KELAS: {studentData.kelas}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Kartu Matematika */}
+                            <div className="space-y-6">
+                                <h3 className="font-black text-slate-800 uppercase tracking-tight text-xl flex items-center gap-3">
+                                    <span className="w-2 h-8 bg-blue-600 rounded-full"></span> Matematika TKA
+                                </h3>
+                                <div className="bg-white rounded-[2rem] border border-slate-200 p-4 space-y-2 shadow-sm">
+                                    {[1, 2, 3, 4].map(idx => (
+                                        <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                                            <span className="font-bold text-slate-500">TKA Matematika {idx}</span>
+                                            <span className="text-2xl font-black text-blue-700">{studentData[`mtk${idx}`] || '0'}</span>
+                                        </div>
+                                    ))}
+                                    <div className="bg-blue-700 p-6 rounded-2xl text-white flex justify-between items-center mt-4 shadow-lg shadow-blue-100">
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Rata-rata</span>
+                                        <span className="text-3xl font-black">
+                                            {(( (parseFloat(studentData.mtk1)||0) + (parseFloat(studentData.mtk2)||0) + (parseFloat(studentData.mtk3)||0) + (parseFloat(studentData.mtk4)||0) ) / 4).toFixed(1)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Kartu Bahasa Indonesia */}
+                            <div className="space-y-6">
+                                <h3 className="font-black text-slate-800 uppercase tracking-tight text-xl flex items-center gap-3">
+                                    <span className="w-2 h-8 bg-teal-500 rounded-full"></span> B. Indonesia TKA
+                                </h3>
+                                <div className="bg-white rounded-[2rem] border border-slate-200 p-4 space-y-2 shadow-sm">
+                                    {[1, 2].map(idx => (
+                                        <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                                            <span className="font-bold text-slate-500">TKA B. Indonesia {idx}</span>
+                                            <span className="text-2xl font-black text-teal-600">{studentData[`bin${idx}`] || '0'}</span>
+                                        </div>
+                                    ))}
+                                    {/* Spacer Visual */}
+                                    <div className="h-[148px] flex items-center justify-center opacity-5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                    </div>
+                                    <div className="bg-teal-600 p-6 rounded-2xl text-white flex justify-between items-center mt-4 shadow-lg shadow-teal-100">
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Rata-rata</span>
+                                        <span className="text-3xl font-black">
+                                            {(( (parseFloat(studentData.bin1||0) + parseFloat(studentData.bin2||0)) ) / 2).toFixed(1)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-16 text-center text-slate-400">
+                            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 mb-4">
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Data Cloud Terhubung Otomatis</span>
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sistem Informasi Akademik SMPN 12 Surabaya</p>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
